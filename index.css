@@ -1,0 +1,100 @@
+html {
+  margin: none;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+}
+
+.slider_container {
+  /* display: flex; */
+  flex-grow: 1;
+  height: 100%;
+}
+
+input#slider {
+  width: 5%;
+  height: 90%;
+  -webkit-appearance: slider-vertical;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  height: 100%;
+}
+
+body h1 {
+  display: block;
+  width: 100%;
+  background-color: black;
+  color: white;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.page_full {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  height: 100%;
+  /* width: 100%;
+  margin: 0; */
+}
+
+.label_map_container {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 4;
+  height: 100%;
+  background-color: whitesmoke;
+  border: 1px solid black;
+}
+
+#svg_map {
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  margin: auto;
+  background-color: lightblue;
+}
+
+.country {
+  fill: whitesmoke;
+}
+
+.country_label_container {
+  display: flex;
+  flex-grow: 1;
+  width: 20%;
+}
+
+#country_label {
+  width: 100%;
+}
+
+#country_label text {
+  font-size: 30px;
+  margin: auto;
+}
+
+.filled {
+  fill: red;
+}
+
+.clicked {
+  fill: yellow;
+}
+
+.outline {
+  fill: none;
+  stroke: grey;
+  stroke-width: 1px;
+}
+
+.graticule {
+  fill: none;
+  stroke: grey;
+  stroke-width: 1px;
+  padding: 1%;
+}

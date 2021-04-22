@@ -1,0 +1,206 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Project 2: COVID-19</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <link rel="stylesheet" href="index.css"></link>
+  </head>
+  <body>
+    <h1>Project 2: COVID-19</h1>
+    <div class="page_full">
+      <div class="slider_container">
+        <input id="slider" type="range" min="0" max="104" step="1" value="100" orient="vertical">
+      </div>
+      <div class="label_map_container">
+        <div class="country_label_container">
+          <svg id="country_label" width="200" height="80"></svg>
+        </div>
+        <div class="map_container">
+          <svg id="svg_map" width="650" height="650"></svg>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let svg = d3.select("svg#svg_map");
+      const width = +svg.attr("width");
+      const height = +svg.attr("height");
+      const margin = { "top": 20, "right": 10, "bottom": 10, "left": 10 };
+
+      const requestData = async function ()
+      {
+
+        // LOADING COVID-19 IMPACT DATA
+        //    world_impact: Feb. 24, 2020 to Apr. 20, 2021
+        const world_impact = await d3.csv("data/cov19/data_fixed.csv");
+        var time_parser = d3.timeParse("%Y-%m-%d")
+        
+        const impact_by_country = 
+          await d3.csv("data/cov19/country_wise_latest.csv");
+
+        // LOADING VACCINE DATA
+        //    vax_by_country: Dec. 22, 2020 to Feb. 22, 2021
+        const vax_by_country = 
+          await d3.csv(
+            "data/country_vaccination/country_vaccinations.csv"
+            );
+        //    vax_by_manu: Dec. 24, 2020 to Apr. 14, 2021
+        const vax_by_manu = 
+          await d3.csv(
+            "data/country_vaccination/country_vaccinations_by_manufacturer.csv"
+            );
+        
+        let dates = []
+
+        for (let entry of world_impact) dates.push(time_parser(entry.date))
+
+        var date_ext = d3.extent(dates)
+        console.log(date_ext)
+
+        // const pfizer_dist = await d3.csv("data/us_vaccination/pfizer_vaccine.csv");
+        // const moderna_dist = await d3.csv("data/us_vaccination/moderna_vaccine.csv");
+        // const nyb = await d3.json("ny_state_biodiversity.json");
+
+        // var counties = topojson.feature(nyb, nyb.objects.counties)
+        // var countiesMesh = topojson.mesh(nyb, nyb.objects.counties)
+        // var stateMesh = topojson.mesh(nyb, nyb.objects.state)
+        
+        // Append a label for the country name
+
+
+        let country_label = d3.select('svg#country_label');
+        let label_width = country_label.attr('width');
+        let label_height = country_label.attr('height');
+
+        country_label.append('text')
+                     .attr('class', 'country_label')
+                     .attr('y', 40)
+                     .text('' + label_width)
+                     .attr('text-anchor', 'middle')
+                     .attr('doinant-baseline', 'auto')
+                     .attr('x', label_width)
+          
+        // Append the choropleth
+        world_map = svg.append("g")
+                       .attr("width", width - margin.left - margin.right)
+                       .attr("height", height - margin.top - margin.bottom)
+                       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        let map_width = +world_map.attr('width');
+        let map_height = +world_map.attr('height');
+
+        // TopoJson file courtesy of Mike Bostock
+        const world = await d3.json('world_topo.json');
+        
+        
+        let countries = topojson.feature(world, world.objects.countries);
+        let countriesMesh = topojson.mesh(world, world.objects.countries);
+        
+
+        // Function for centering the projection on a certain country
+        function render_on(centroid) {
+          let projection = d3.geoOrthographic().fitSize([map_width, map_height], countries)
+                            //  .rotate(centroid);
+          //  .scale(150)
+          //  .clipAngle(90);
+          let path = d3.geoPath().projection(projection);
+
+          // Adding a graticule
+          var graticule = d3.geoGraticule10();
+          grat = world_map.append("path")
+                          .attr("class", "graticule")
+                          .attr("d", path(graticule));
+
+          // grat.datum(graticule)
+          //          .attr('class', 'graticule')
+          //          .attr('d', path)
+
+          // Adding country paths
+          world_map.selectAll('path.country').data(countries.features)
+            .join('path')
+            .attr('class', 'country')
+            .attr('note', d => d.id)
+            .attr('d', path)
+            .on('mouseover', function (e, d)
+            {
+              name_len = d.properties.name.length
+
+              // COUNTRY --> RED
+              let country = d3.select(this)
+              console.log(path.centroid(d));
+              // unclicked countries should turn red on mouseover
+              if (!country.attr('class').includes('clicked'))
+              {
+                country.attr('class', 'country filled')
+              }
+              // LABEL
+              d3.select('text.country_label')
+                .text(d.properties.name)
+            })
+            .on('mouseout', function (e, d)
+            {
+              // Get rid of colored countries
+              let country = d3.select(this)
+              if (!country.attr('class').includes('clicked'))
+              {
+                country.attr('class', 'country')
+              }
+              // LABEL
+              d3.select('text.country_label')
+                .text('')
+            })
+            .on('click', function (e, d)
+            {
+              country = d3.select(this)
+              d3.selectAll('path.clicked')
+                .attr('class', 'country')
+              d3.select(this)
+                .attr('class', 'clicked')
+
+              // render_on([90, 0])
+
+            })
+
+          world_map.join('path').datum(countriesMesh)
+            .attr('class', 'outline')
+            .attr('d', path)
+
+        }
+
+        render_on([0, 0]);
+
+        
+
+        // var projection = d3.geoMercator().fitSize([width, height], counties)
+        // var path = d3.geoPath().projection(projection)
+
+        // diagram.selectAll("path.counties").data(counties.features)
+        //   .join("path")
+        //   .attr("class", "county")
+        //   // .attr("fill", d => colorScale(d.properties.Total_Biodiversity))
+        //   .attr("d", path)
+
+        
+      // Checking to see how many countries there are
+      // There are 187 out of 195, so pretty good
+      // countries_list = []
+      // for (let country of impact_by_country) countries_list.push(country['Country/Region'])
+      // cov_countries = new Set(countries_list)
+      // console.log(cov_countries)
+
+      // Checking to see how many countries there are
+      // There are 177 out of 195, so not terrible
+      // vax_countries_list = []
+      // for (let vax_country of vax_by_country) vax_countries_list.push(vax_country.country)
+      // vax_countries = new Set(vax_countries_list)
+      // console.log(vax_countries)
+
+      // Rendeding slider functionality
+
+      }
+
+      requestData();
+    </script>
+  </body>
+</html>
