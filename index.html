@@ -32,6 +32,8 @@
       const requestData = async function ()
       {
         // LOADING COVID-19 IMPACT DATA
+        // Gathered from Our World in Data's repository found here:
+        // https://github.com/owid/covid-19-data/tree/master/public/data
         //    world_impact: Feb. 24, 2020 to Apr. 20, 2021
         const world_impact = await d3.csv("data/cov19/data_fixed.csv");
         console.log(world_impact)
